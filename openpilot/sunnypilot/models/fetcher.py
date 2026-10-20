@@ -137,6 +137,10 @@ class ModelFetcher:
   def active_source(chestnut_present: bool) -> str:
     return "chestnut" if chestnut_present else "qcom"
 
+  def _extend_catalog(self, source: str, json_data: dict) -> dict:
+    """The fetched catalog as cached and parsed; a subclass folds models in (fetcher_jetlink.py)."""
+    return json_data
+
   def _fetch_and_cache_models(self, source: str) -> list[custom.ModelManagerSP.ModelBundle] | None:
     """Fetches fresh model data from remote and updates cache.
     Returns None on transport errors. Raises on 404 and other fatal HTTP errors.
@@ -153,7 +157,7 @@ class ModelFetcher:
       # Raise for any other 4xx/5xx
       response.raise_for_status()
 
-      json_data = response.json()
+      json_data = self._extend_catalog(source, response.json())
       parsed = self.model_parser.parse_models(json_data)
       if parsed:
         self.model_caches[source].set(json_data)

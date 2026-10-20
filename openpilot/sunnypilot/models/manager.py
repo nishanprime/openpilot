@@ -17,6 +17,7 @@ from openpilot.common.hardware.hw import Paths
 
 from openpilot.cereal import messaging, custom
 from openpilot.sunnypilot.models.fetcher import ModelFetcher
+from openpilot.sunnypilot.models.fetcher_jetlink import ModelFetcherJetlink
 from openpilot.sunnypilot.models.helpers import (ACTIVE_BUNDLE_KEYS, get_active_bundle, get_selected_bundle,
                                                   resolve_bundle_by_ref, validate_active_bundles, verify_file)
 
@@ -33,7 +34,7 @@ class ModelManagerSP:
 
   def __init__(self):
     self.params = Params()
-    self.model_fetcher = ModelFetcher(self.params)
+    self.model_fetcher = ModelFetcherJetlink(self.params)
     self.pm = messaging.PubMaster(["modelManagerSP"])
     self.sm = messaging.SubMaster(["deviceState"])
     self.chestnut_present = False
@@ -181,15 +182,21 @@ class ModelManagerSP:
 
   async def _download_bundle(self, model_bundle: custom.ModelManagerSP.ModelBundle, destination_path: str, source: str) -> None:
     self.selected_bundle = model_bundle
-    self.selected_bundle.status = custom.ModelManagerSP.DownloadStatus.downloading
-    for model in self.selected_bundle.models:
-      model.artifact.downloadProgress.status = custom.ModelManagerSP.DownloadStatus.downloading
-    self._report_status()
+    # without a chestnut the big-model slot is Jetlink's pick: the far end fetches its own form of
+    # the model by the bundle's ref, so the chestnut's files are not downloaded to the comma
+    models = [] if source == "chestnut" and not self.chestnut_present else self.selected_bundle.models
+    if models:
+      # a bundle with nothing to fetch goes straight to downloaded below, rather than showing a
+      # download that never runs
+      self.selected_bundle.status = custom.ModelManagerSP.DownloadStatus.downloading
+      for model in models:
+        model.artifact.downloadProgress.status = custom.ModelManagerSP.DownloadStatus.downloading
+      self._report_status()
     os.makedirs(destination_path, exist_ok=True)
 
     try:
       seen_artifacts: set[str] = set()
-      for model in self.selected_bundle.models:
+      for model in models:
         artifact = model.artifact
         if not artifact.fileName:
           continue
@@ -250,10 +257,13 @@ class ModelManagerSP:
         self.chestnut_present = self.sm['deviceState'].chestnutPresent
         self.source_models = {source: self.model_fetcher.get_bundles_for_source(source) for source in ModelFetcher.MODEL_SOURCES}
         self.available_models = self.source_models[ModelFetcher.active_source(self.chestnut_present)]
-        validate_active_bundles(self.params, self.source_models)
+        validate_active_bundles(self.params, self.source_models, chestnut_present=self.chestnut_present)
         self.active_bundle = get_active_bundle(self.params, chestnut=self.chestnut_present)
 
-        if get_selected_bundle(self.params, "chestnut") is not None and get_selected_bundle(self.params, "qcom") is None:
+        # a chestnut falls back to the small slot's model; without one the big pick is Jetlink's,
+        # and the small model the user left (stock modeld's Default) stays as it is
+        if self.chestnut_present and get_selected_bundle(self.params, "chestnut") is not None and \
+           get_selected_bundle(self.params, "qcom") is None:
           if self.params.get("ModelManager_DownloadRef") is None:
             from openpilot.sunnypilot.models.model_name import DEFAULT_MODEL_REF
             self.params.put("ModelManager_DownloadRef", DEFAULT_MODEL_REF)

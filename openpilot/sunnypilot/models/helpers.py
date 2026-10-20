@@ -71,7 +71,8 @@ def _bundle_is_valid_locally(bundle: custom.ModelManagerSP.ModelBundle) -> bool:
              for file_name, expected_hash in _bundle_artifacts(bundle))
 
 
-def _bundle_needs_reset(active_bundle: custom.ModelManagerSP.ModelBundle, available_bundles: list[custom.ModelManagerSP.ModelBundle] | None) -> bool:
+def _bundle_needs_reset(active_bundle: custom.ModelManagerSP.ModelBundle, available_bundles: list[custom.ModelManagerSP.ModelBundle] | None,
+                        check_files: bool = True) -> bool:
   if active_bundle is None:
     return False
 
@@ -95,7 +96,7 @@ def _bundle_needs_reset(active_bundle: custom.ModelManagerSP.ModelBundle, availa
     if set(_bundle_artifacts(active_bundle)) != set(_bundle_artifacts(matching_bundle)):
       return True
 
-  return not _bundle_is_valid_locally(active_bundle)
+  return check_files and not _bundle_is_valid_locally(active_bundle)
 
 
 def _parse_active_bundle(raw_bundle) -> "custom.ModelManagerSP.ModelBundle | None":
@@ -138,7 +139,8 @@ def resolve_bundle_by_ref(
   return None
 
 
-def _validate_active_bundle(params: Params, source: str, available_bundles: list[custom.ModelManagerSP.ModelBundle] | None = None) -> None:
+def _validate_active_bundle(params: Params, source: str, available_bundles: list[custom.ModelManagerSP.ModelBundle] | None = None,
+                            check_files: bool = True) -> None:
   global _LAST_VALIDATED_RAW
 
   key = ACTIVE_BUNDLE_KEYS[source]
@@ -146,22 +148,29 @@ def _validate_active_bundle(params: Params, source: str, available_bundles: list
   if not raw_bundle:
     return
 
-  if _LAST_VALIDATED_RAW.get(key) == raw_bundle:
+  # a pick that passed without its files checked (Jetlink's) is cached apart, so it is checked
+  # again in full once a chestnut is fitted
+  cache_key = key if check_files else f"{key}/without_files"
+  if _LAST_VALIDATED_RAW.get(cache_key) == raw_bundle:
     return
 
   active_bundle = _parse_active_bundle(raw_bundle)
-  if active_bundle is None or _bundle_needs_reset(active_bundle, available_bundles):
+  if active_bundle is None or _bundle_needs_reset(active_bundle, available_bundles, check_files):
     cloudlog.warning(f"Active model bundle invalid for {source}; resetting to default")
     params.remove(key)
-    _LAST_VALIDATED_RAW[key] = None
+    _LAST_VALIDATED_RAW[cache_key] = None
   else:
-    _LAST_VALIDATED_RAW[key] = raw_bundle
+    _LAST_VALIDATED_RAW[cache_key] = raw_bundle
 
 
-def validate_active_bundles(params: Params, source_bundles: dict[str, list[custom.ModelManagerSP.ModelBundle]]) -> None:
+def validate_active_bundles(params: Params, source_bundles: dict[str, list[custom.ModelManagerSP.ModelBundle]],
+                            chestnut_present: bool | None = None) -> None:
   # an empty list means the fetch failed, not that the catalog dropped the bundle
   for source, bundles in source_bundles.items():
-    _validate_active_bundle(params, source, bundles or None)
+    # without a chestnut the big-model slot is Jetlink's pick, whose files are never on the comma:
+    # the far end fetches its own form of the model by the bundle's ref
+    check_files = not (source == "chestnut" and chestnut_present is False)
+    _validate_active_bundle(params, source, bundles or None, check_files)
   get_active_model_runner(params, force_check=True)
 
 
