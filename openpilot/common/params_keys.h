@@ -213,6 +213,16 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"ModelManager_ActiveBundleChestnut", {PERSISTENT, JSON}},
     {"ModelManager_ActiveJson", {CLEAR_ON_MANAGER_START, JSON}},
     {"ModelManager_ClearCache", {CLEAR_ON_MANAGER_START, BOOL}},
+
+    // Jetlink params: the large driving model on an attached computer. See sunnypilot/jetlink_adapter/.
+    {"JetlinkLink", {PERSISTENT | BACKUP, INT, "0"}},  // 0 off, 1 USB (Mac, Jetson, Linux PC, Android), 2 iOS
+    {"JetlinkProgress", {CLEAR_ON_MANAGER_START, JSON}},
+    // JetlinkSpec carries whether the engine is built, which must survive a reboot,
+    // or every ignition cycle would rebuild a multi-minute engine
+    {"JetlinkSpec", {PERSISTENT, JSON}},
+    {"JetlinkModelPointers", {PERSISTENT, JSON}},
+    {"JetlinkChargePhone", {PERSISTENT, BOOL, "0"}},  // an iPhone on a direct cable charges from the comma
+    {"Offroad_JetlinkUnavailable", {CLEAR_ON_MANAGER_START, JSON}},
     {"ModelManager_DownloadRef", {CLEAR_ON_MANAGER_START | CLEAR_ON_ONROAD_TRANSITION, STRING}},
     {"ModelManager_Favs", {PERSISTENT | BACKUP, STRING}},
     {"ModelManager_LastSyncTime", {CLEAR_ON_MANAGER_START | CLEAR_ON_OFFROAD_TRANSITION, INT, "0"}},
