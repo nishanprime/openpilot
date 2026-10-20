@@ -81,7 +81,6 @@ tools = [
 ]
 
 submodules = [
-  "jetlink",
   "msgq",
   "opendbc",
   "pandacan",
@@ -181,4 +180,3 @@ pandacan = { path = "panda", editable = true }
 rednose = { path = "rednose_repo", editable = true }
 teleoprtc = { path = "teleoprtc_repo", editable = true }
 tinygrad = { path = "tinygrad_repo", editable = true }
-jetlink = { path = "jetlink_repo", editable = true }
