@@ -12,6 +12,7 @@ from openpilot.sunnypilot.selfdrive.selfdrived.events_base import EventsBase, Pr
   NoEntryAlert, ImmediateDisableAlert, EngagementAlert, AlertCallbackType, wrong_car_mode_alert
 from openpilot.sunnypilot.selfdrive.controls.lib.speed_limit import PCM_LONG_REQUIRED_MAX_SET_SPEED, CONFIRM_SPEED_THRESHOLD
 from openpilot.common.hardware import HARDWARE
+from openpilot.sunnypilot.selfdrive.selfdrived.jetlink_events import EventsWithJetlink, big_model_ready_alert
 
 AlertSize = log.SelfdriveState.AlertSize
 AlertStatus = log.SelfdriveState.AlertStatus
@@ -73,7 +74,7 @@ def speed_limit_pre_active_alert(CP: car.CarParams, CS: car.CarState, sm: messag
     Priority.LOW, VisualAlert.none, AudibleAlertSP.promptSingleLow, .1)
 
 
-class EventsSP(EventsBase):
+class EventsSP(EventsWithJetlink, EventsBase):
   def __init__(self):
     super().__init__()
     self.event_counters = dict.fromkeys(EVENTS_SP.keys(), 0)
@@ -250,10 +251,7 @@ EVENTS_SP: dict[int, dict[str, Alert | AlertCallbackType]] = {
   },
 
   EventNameSP.bigModelReady: {
-    ET.PERMANENT: Alert(
-      "Big Model Ready",
-      "",
-      AlertStatus.normal, AlertSize.small,
-      Priority.LOW, VisualAlert.none, AudibleAlert.prompt, 2.),
+    # "Big Model Ready" for a chestnut, "Big Model Active" a second after a Jetlink swap
+    ET.PERMANENT: big_model_ready_alert,
   },
 }
