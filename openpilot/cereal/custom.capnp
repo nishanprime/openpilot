@@ -313,6 +313,7 @@ struct LongitudinalPlanSP @0xf35cc4560bbf6ec2 {
 
 struct OnroadEventSP @0xda96579883444c35 {
   events @0 :List(Event);
+  jetlink @1 :OnroadEventJetlink;
 
   struct Event {
     name @0 :EventName;
@@ -465,6 +466,7 @@ struct ModelDataV2SP @0xa1680744031fdb2d {
   laneTurnDirection @0 :TurnDirection;
   leftLaneChangeEdgeBlock @1 :Bool;
   rightLaneChangeEdgeBlock @2 :Bool;
+  jetlink @3 :ModelDataV2Jetlink;
 
   enum TurnDirection {
     none @0;
@@ -501,4 +503,51 @@ struct CustomReserved18 @0xc86a3d38d13eb3ef {
 }
 
 struct CustomReserved19 @0xa4f1eb3323f5f582 {
+}
+
+# ---- jetlink -------------------------------------------------------------------------------
+# The large driving model on an attached computer (sunnypilot/jetlink_adapter). Each sunnypilot
+# struct that jetlink extends carries one `jetlink` nest at its next ordinal, defined here, and no
+# sunnypilot enum carries a jetlink enumerant, so an upstream append renumbers only the nest's line.
+
+struct ModelDataV2Jetlink @0xa7dae03043345e2d {
+  # the large model's state, as modeld's joining model reports it (jetlink.openpilot.STATES).
+  # Offroad progress stays in the JetlinkProgress param
+  state @0 :State;
+
+  enum State {
+    none @0;         # the link is off, or not joining this drive
+    joining @1;
+    running @2;      # the large model drives
+    retrying @3;
+    unavailable @4;
+    ready @5;        # link up, engine loaded, waiting for nothing to be in control to swap in
+  }
+}
+
+# jetlink's onroad events, raised and logged by selfdrived beside sunnypilot's
+# (onroadEventsSP.jetlink.events). Event has OnroadEventSP.Event's fields.
+struct OnroadEventJetlink @0xcedd40c25ff249cd {
+  events @0 :List(Event);
+
+  struct Event {
+    name @0 :EventName;
+
+    # event types
+    enable @1 :Bool;
+    noEntry @2 :Bool;
+    warning @3 :Bool;   # alerts presented only when  enabled or soft disabling
+    userDisable @4 :Bool;
+    softDisable @5 :Bool;
+    immediateDisable @6 :Bool;
+    preEnable @7 :Bool;
+    permanent @8 :Bool; # alerts presented regardless of openpilot state
+    overrideLateral @10 :Bool;
+    overrideLongitudinal @9 :Bool;
+  }
+
+  enum EventName {
+    bigModelAvailable @0;  # ready while something is in control: disengage fully to switch
+    bigModelLinkLost @1;   # lost or too slow while engaged: the small model drives on
+  }
 }
