@@ -167,7 +167,7 @@ class DeviceLayoutMici(NavScroller):
 
     reset_calibration_btn = EngagedConfirmationButton("reset calibration", "reset", gui_app.texture("icons_mici/settings/device/lkas.png", 122, 64),
                                                       reset_calibration_callback,
-                                                      description="Mount the device within 4° left or right and 5° up or 9° down. openpilot calibrates " +
+                                                      description="Mount the device within 4° left or right and 5° up or 9° down. NishPilot calibrates " +
                                                                   "continuously; resetting is rarely needed. Resetting clears learned calibration.")
 
     reboot_btn = EngagedConfirmationCircleButton("reboot", gui_app.texture("icons_mici/settings/device/reboot.png", 64, 70),

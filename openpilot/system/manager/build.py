@@ -59,7 +59,7 @@ def build() -> None:
     # Show TextWindow
     spinner.close()
     if not os.getenv("CI"):
-      with TextWindow("openpilot failed to build\n \n" + error_s) as t:
+      with TextWindow("NishPilot failed to build\n \n" + error_s) as t:
         t.wait_for_exit()
     exit(1)
 

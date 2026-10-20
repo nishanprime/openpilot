@@ -185,7 +185,7 @@ EmptyAlert = Alert("" , "", AlertStatus.normal, AlertSize.none, Priority.LOWEST,
 
 class NoEntryAlert(Alert):
   def __init__(self, alert_text_2: str,
-               alert_text_1: str = "openpilot Unavailable",
+               alert_text_1: str = "NishPilot Unavailable",
                visual_alert: car.CarControl.HUDControl.VisualAlert=VisualAlert.none,
                priority: Priority = Priority.LOW):
     if HARDWARE.get_device_type() == 'mici':
@@ -207,7 +207,7 @@ class SoftDisableAlert(Alert):
 class UserSoftDisableAlert(SoftDisableAlert):
   def __init__(self, alert_text_2: str):
     super().__init__(alert_text_2),
-    self.alert_text_1 = "openpilot will disengage"
+    self.alert_text_1 = "NishPilot will disengage"
 
 
 class ImmediateDisableAlert(Alert):

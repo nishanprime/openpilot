@@ -21,8 +21,8 @@ class AlphaLongConfirmPage(NavScroller):
       GreyBigButton("enabling alpha longitudinal", "scroll to continue",
                     gui_app.texture("icons_mici/setup/warning.png", 64, 64)),
       GreyBigButton("", "WARNING: alpha longitudinal control may disable Automatic Emergency Braking (AEB)"),
-      GreyBigButton("", "On this car, openpilot defaults to the stock system's built-in ACC."),
-      GreyBigButton("", "Enabling this will switch to openpilot longitudinal control."),
+      GreyBigButton("", "On this car, NishPilot defaults to the stock system's built-in ACC."),
+      GreyBigButton("", "Enabling this will switch to NishPilot longitudinal control."),
       accept,
     ])
 
@@ -81,7 +81,7 @@ class DeveloperLayoutMici(NavScroller):
                                           description="Run lateral maneuvers for testing steering control.")
     self._alpha_long_toggle = BigToggle("alpha longitudinal", initial_state=ui_state.params.get_bool("AlphaLongitudinalEnabled"),
                                         toggle_callback=self._on_alpha_long_enabled,
-                                        description="Use alpha openpilot longitudinal control instead of stock ACC. This may disable Automatic Emergency " +
+                                        description="Use alpha NishPilot longitudinal control instead of stock ACC. This may disable Automatic Emergency " +
                                                     "Braking (AEB).")
     self._navigation_toggle = BigParamControl("navigation (alpha)", "NavigationEnabled",
                                               description="Turn-by-turn navigation with a route map. Set a destination from comma connect.")

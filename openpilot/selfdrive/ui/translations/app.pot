@@ -455,7 +455,7 @@ msgid "ERROR"
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/onboarding.py
-msgid "Welcome to sunnypilot"
+msgid "Welcome to NishPilot"
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/onboarding.py
@@ -480,7 +480,7 @@ msgid "You must accept the Terms of Service in order to use sunnypilot."
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/onboarding.py
-msgid "Decline, uninstall sunnypilot"
+msgid "Decline, uninstall NishPilot"
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/settings.py
@@ -628,11 +628,11 @@ msgid "Preview the driver facing camera to ensure that driver monitoring has goo
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/device.py
-msgid "sunnypilot requires the device to be mounted within 4° left or right and within 5° up or 9° down."
+msgid "NishPilot requires the device to be mounted within 4° left or right and within 5° up or 9° down."
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/device.py
-msgid "Review the rules, features, and limitations of sunnypilot"
+msgid "Review the rules, features, and limitations of NishPilot"
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/device.py
@@ -796,7 +796,7 @@ msgid "Lateral Maneuver Mode"
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/developer.py
-msgid "sunnypilot Longitudinal Control (Alpha)"
+msgid "NishPilot Longitudinal Control (Alpha)"
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/developer.py
@@ -819,11 +819,11 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: openpilot/selfdrive/ui/layouts/settings/toggles.py
-msgid "When enabled, pressing the accelerator pedal will disengage sunnypilot."
+msgid "When enabled, pressing the accelerator pedal will disengage NishPilot."
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/toggles.py
-msgid "Enable driver monitoring even when sunnypilot is not engaged."
+msgid "Enable driver monitoring even when NishPilot is not engaged."
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/toggles.py
@@ -875,7 +875,7 @@ msgid "Driving Personality"
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/toggles.py
-msgid "Changing this setting will restart sunnypilot if the car is powered on."
+msgid "Changing this setting will restart NishPilot if the car is powered on."
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/toggles.py
@@ -883,7 +883,7 @@ msgid "Experimental mode is currently unavailable on this car since the car's st
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/toggles.py
-msgid "Enable sunnypilot"
+msgid "Enable NishPilot"
 msgstr ""
 
 #: openpilot/selfdrive/ui/layouts/settings/toggles.py
@@ -1055,7 +1055,7 @@ msgid "MAX"
 msgstr ""
 
 #: openpilot/selfdrive/ui/onroad/alert_renderer.py
-msgid "sunnypilot Unavailable"
+msgid "NishPilot Unavailable"
 msgstr ""
 
 #: openpilot/selfdrive/ui/onroad/alert_renderer.py

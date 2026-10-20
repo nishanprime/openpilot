@@ -145,7 +145,7 @@ class InitialCruiseSpeedPicker(BigDialogBase):
 
 class InitialCruiseSpeedButton(BigButton):
   def __init__(self):
-    super().__init__("initial max speed", " ", description="Max speed when engaging openpilot.\n" +
+    super().__init__("initial max speed", " ", description="Max speed when engaging NishPilot.\n" +
                                                            "If you are already driving faster, your current speed is used.\n" +
                                                            "Resume restores the previous max speed.")
     self._picker = InitialCruiseSpeedPicker(self.refresh)
