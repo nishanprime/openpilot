@@ -8,5 +8,9 @@ from openpilot.common.params import Params
 
 
 class ModelStateBase:
+  # modeld's share of dropped camera frames, written before every run(). A plain model ignores it;
+  # Jetlink's joining model hands a lagging large model back on it
+  frame_drop_ratio: float = 0.0
+
   def __init__(self):
     self.lat_delay = Params().get("LagdValueCache", return_default=True)
