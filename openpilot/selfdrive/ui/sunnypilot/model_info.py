@@ -11,8 +11,9 @@ import time
 from openpilot.common.hardware.hw import Paths
 from openpilot.selfdrive.ui.ui_state import ui_state, ChestnutState
 from openpilot.sunnypilot.models.fetcher import get_cached_bundles
+from openpilot.sunnypilot import jetlink_adapter
 from openpilot.sunnypilot.models.helpers import get_active_source, get_selected_bundle, resolve_bundle_by_ref
-from openpilot.sunnypilot.models.model_name import DEFAULT_BIG_MODEL, DEFAULT_MODEL
+from openpilot.sunnypilot.models.model_name import DEFAULT_MODEL
 
 
 def model_cache_size_mb() -> float:
@@ -39,7 +40,11 @@ def bundles_for_source(source: str):
 
 
 def default_model(source: str) -> str:
-  return DEFAULT_BIG_MODEL if source == 'chestnut' else DEFAULT_MODEL
+  """What an empty slot runs. The big slot's is the chestnut's model in the tree when a board is
+  fitted; with none, the slot is Jetlink's, whose default is its own."""
+  if source != 'chestnut':
+    return DEFAULT_MODEL
+  return jetlink_adapter.default_big_model(ui_state.chestnut_present, ui_state.jetlink)
 
 
 def default_model_name(source: str) -> str:
@@ -47,16 +52,24 @@ def default_model_name(source: str) -> str:
 
 
 def big_model_state() -> str | None:
-  """'failed' | 'loading' | None, from the same state the icons render."""
+  """'failed' | 'loading' | 'ready' | None, from the same state the icons render."""
   return {ChestnutState.UNCOMPILED: 'failed',
           ChestnutState.FAILED: 'failed',
-          ChestnutState.LOADING: 'loading'}.get(ui_state.chestnut_state)
+          ChestnutState.LOADING: 'loading',
+          ChestnutState.WAITING: 'ready'}.get(ui_state.chestnut_state)
 
 
 def carrying_model() -> tuple[str | None, str | None, str | None]:
   """(source, internal name, display name) of what actually drives. Runner-matched:
   when a Default big cannot carry, stock modeld runs the Default small, never the
   small slot's pick; a custom big has no automatic fallback yet -> (None, None, None)."""
+  # only with no board fitted does the chestnut state describe the Jetlink view
+  if not ui_state.chestnut_present and ui_state.chestnut_state == ChestnutState.ACTIVE:
+    jetlink = ui_state.jetlink
+    # Jetlink's stand-in, while the pick is prepared, is its active model
+    name = jetlink.active_model if jetlink is not None else None
+    if name is not None:
+      return 'jetlink', name, name
   source = active_source()
   if source == "chestnut":
     bundle = get_selected_bundle(ui_state.params, "chestnut")

@@ -11,6 +11,7 @@ from opendbc.car.structs import car
 from opendbc.sunnypilot.car.interfaces import has_bsm
 from openpilot.common.params import Params
 from openpilot.selfdrive.ui.sunnypilot.layouts.settings.display import OnroadBrightness
+from openpilot.selfdrive.ui.sunnypilot.ui_state_jetlink import UIStateJetlink
 from openpilot.sunnypilot.models.helpers import ACTIVE_BUNDLE_KEYS, get_active_source
 from openpilot.sunnypilot.sunnylink.sunnylink_state import SunnylinkState
 from openpilot.system.ui.lib.application import gui_app
@@ -28,7 +29,7 @@ class OnroadTimerStatus(Enum):
   RESUME = 2
 
 
-class UIStateSP:
+class UIStateSP(UIStateJetlink):
   def __init__(self):
     self.params = Params()
     self.CP_SP: custom.CarParamsSP | None = None
@@ -65,12 +66,14 @@ class UIStateSP:
     self.custom_torque_params: bool = False
     self.torque_override_enabled: bool = False
     self._sp_initialized: bool = False
+    UIStateJetlink.__init__(self)
 
   def update(self) -> None:
     if self.sunnylink_enabled:
       self.sunnylink_state.start()
     else:
       self.sunnylink_state.stop()
+    UIStateJetlink.update(self)
 
   def onroad_brightness_handle_alerts(self, _ui_state, alert):
     if _ui_state.sm.recv_frame["carState"] < _ui_state.started_frame:
@@ -160,6 +163,7 @@ class UIStateSP:
     # stock only counts the default big model's compiled pkl. a downloaded big bundle runs on the
     # chestnut just the same, so ChestnutState has to see it as available too.
     self.chestnut_compiled = self.chestnut_compiled or self.model_runner_tinygrad
+    UIStateJetlink.update_params(self)
     self.blindspot = self.params.get_bool("BlindSpot")
     self.chevron_metrics = self.params.get("ChevronInfo")
     self.custom_interactive_timeout = self.params.get("InteractivityTimeout", return_default=True)

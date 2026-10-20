@@ -11,11 +11,14 @@ import pyray as rl
 from openpilot.cereal import custom
 from openpilot.selfdrive.ui.mici.widgets.dialog import BigConfirmationDialog, BigDialog
 from openpilot.sunnypilot.models.helpers import ACTIVE_BUNDLE_KEYS, get_selected_bundle
-from openpilot.selfdrive.ui.mici.widgets.button import BigButton
+from openpilot.selfdrive.ui.mici.widgets.button import BigButton, BigMultiParamToggle
 from openpilot.selfdrive.ui.ui_state import ui_state, device
+from openpilot.selfdrive.ui.sunnypilot.jetlink_panel import big_model_note, big_model_progress, link_mode, link_toggle_meaningful, \
+  standin_model
 from openpilot.selfdrive.ui.sunnypilot.model_info import (active_source, big_model_state, bundles_for_source, carrying_model,
                                                            default_model_name, model_cache_size_mb, model_info, queued_name,
                                                            refresh_in_progress, refresh_model_list)
+from openpilot.sunnypilot.jetlink_adapter import KEYS, MODES
 from openpilot.system.ui.lib.application import FontWeight, gui_app
 from openpilot.system.ui.lib.multilang import tr
 from openpilot.system.ui.widgets import Widget
@@ -33,12 +36,38 @@ def _model_info() -> tuple[str, str, str]:
     big = get_selected_bundle(ui_state.params, "chestnut")
     carry_display = big.displayName if big else default_model_name("chestnut")
   active_text = (carry_display or active_name).lower()
+  provisioning = big_model_progress()
+  if provisioning is not None:
+    stage, frac, msg = provisioning
+    if stage == 'failed':
+      return active_text, tr("big model"), msg or tr("unavailable")
+    # "waiting for jetlink" says more than "connect 0%"; no percentage for a stage with nothing to measure
+    detail = msg or tr(stage)
+    return active_text, tr("big model"), f"{detail} {frac * 100:.0f}%" if frac > 0 else detail
+  if standin := standin_model():
+    # the last model the host built drives until the pick is downloaded and built
+    return active_text, tr("big model"), tr("{} for now").format(standin.lower())
   if state == 'failed':
     return active_text, tr("big model"), tr("unavailable")
   if state == 'loading':
     return active_text, tr("big model"), tr("getting ready")
+  if state == 'ready':
+    # Jetlink's: only the switch window is missing, which opens with nothing in control
+    return active_text, tr("big model"), tr("ready, disengage fully")
   header = tr("small model") if source == "chestnut" else tr("big model")
   return active_text, header, other_name.lower()
+
+
+# the value line: the mode
+LINK_MODE_LABELS = {"off": "off", "usb": "usb", "ios": "iOS"}
+
+
+class JetlinkToggle(BigMultiParamToggle):
+  """The Jetlink setting, an index into MODES. Reloaded from the param on the panel's tick, so a
+  link set from sunnylink shows; a value this build does not know reads as off."""
+
+  def _load_value(self):
+    self.set_value(self._options[MODES.index(link_mode())])
 
 
 class CurrentModelInfo(Widget):
@@ -91,11 +120,19 @@ class ModelsLayoutMici(NavScroller):
     self.cancel_download_btn = BigButton(tr("cancel download"))
     self.cancel_download_btn.set_click_callback(lambda: ui_state.params.remove("ModelManager_DownloadRef"))
 
+    # the pills follow the param; locked onroad like the model buttons beside it: jetlink switches the link only parked
+    self.link_toggle = JetlinkToggle(tr("jetlink"), KEYS.link, [tr(LINK_MODE_LABELS[m]) for m in MODES],
+                                     description=tr("Runs big models on a computer or phone plugged into the comma.\n" +
+                                                    "USB for a Mac, Jetson, Linux PC or Android. iOS for an iPhone or iPad.\n" +
+                                                    "Turns off ADB. The small model drives until the big model is ready."))
+    self.link_toggle.set_visible(link_toggle_meaningful())
+
     self.clear_cache_btn = BigButton(tr("clear cache"), value=f"{model_cache_size_mb():.1f} MB")
     self.clear_cache_btn.set_click_callback(self._confirm_clear_cache)
     self._cache_size_time = 0.0
 
-    self.main_items = [self.current_model_info, self.select_model_btn, self.cancel_download_btn, self.refresh_btn, self.clear_cache_btn]
+    self.main_items = [self.current_model_info, self.select_model_btn, self.cancel_download_btn, self.link_toggle, self.refresh_btn,
+                       self.clear_cache_btn]
     self._scroller.add_widgets(self.main_items)
 
   @property
@@ -194,7 +231,9 @@ class ModelsLayoutMici(NavScroller):
 
     btns = []
     for bundle in bundles:
-      btn = BigButton(bundle.displayName.lower())
+      # a big model's line says whether the host has built it or the comma has it
+      note = big_model_note(bundle.ref) if source == "chestnut" else None
+      btn = BigButton(bundle.displayName.lower(), value=note.lower() if note else "")
       btn.set_click_callback(lambda b=bundle: self._select_model(b))
       btns.append(btn)
     self._push_selection_view(btns)
@@ -209,6 +248,7 @@ class ModelsLayoutMici(NavScroller):
     super()._update_state()
 
     self.select_model_btn.set_enabled(ui_state.is_offroad())
+    self.link_toggle.set_enabled(ui_state.is_offroad())
     self.cancel_download_btn.set_visible(False)
     self.current_model_info.current_model_header._shimmer = False
     self.current_model_info.info_header._shimmer = False
@@ -234,6 +274,9 @@ class ModelsLayoutMici(NavScroller):
     elif (now := time.monotonic()) - self._cache_size_time > 0.5:
       self._cache_size_time = now
       self.clear_cache_btn.set_value(f"{model_cache_size_mb():.1f} MB")
+      # the setting and whether to offer it are param reads, so they ride this half-second tick
+      self.link_toggle._load_value()
+      self.link_toggle.set_visible(link_toggle_meaningful())
 
     # manager is offroad-only, so a refresh queued onroad would never be serviced
     refreshing = refresh_in_progress(self._refresh_start)

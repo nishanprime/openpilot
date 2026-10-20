@@ -27,6 +27,8 @@ PREBUILT_PATH = os.path.join(Paths.comma_home(), "prebuilt") if PC else "/data/o
 class DeveloperLayoutSP(DeveloperLayout):
   def __init__(self):
     super().__init__()
+    # Jetlink holds the USB port that ADB needs (UIStateJetlink turns ADB off while the link is on)
+    self._adb_toggle.action_item.set_enabled(lambda: ui_state.is_offroad() and not ui_state.adb_blocked)
     self.error_log_path = os.path.join(Paths.crash_log_root(), "error.log")
     self._is_release_branch: bool = self._is_release or ui_state.params.get_bool("IsReleaseSpBranch")
     self._is_development_branch: bool = ui_state.params.get_bool("IsTestedBranch") or ui_state.params.get_bool("IsDevelopmentBranch")

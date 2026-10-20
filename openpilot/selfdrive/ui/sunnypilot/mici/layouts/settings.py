@@ -9,6 +9,7 @@ from openpilot.selfdrive.ui.mici.layouts.settings.settings import SettingsBigBut
 from openpilot.selfdrive.ui.mici.layouts.settings.device.device_layout import DeviceLayoutMici
 from openpilot.selfdrive.ui.mici.widgets.button import BigCircleButton
 from openpilot.selfdrive.ui.mici.widgets.dialog import BigConfirmationDialog, BigDialog
+from openpilot.selfdrive.ui.sunnypilot.mici.layouts.developer import DeveloperLayoutMiciSP
 from openpilot.selfdrive.ui.sunnypilot.mici.layouts.sunnylink import SunnylinkLayoutMici
 from openpilot.selfdrive.ui.sunnypilot.mici.layouts.models import ModelsLayoutMici
 from openpilot.selfdrive.ui.ui_state import ui_state
@@ -35,6 +36,10 @@ class SettingsLayoutSP(OP.SettingsLayout):
 
     device_panel = DeviceLayoutMici()
     self._scroller._items[2].set_click_callback(lambda: gui_app.push_widget(device_panel))
+
+    developer_panel = DeveloperLayoutMiciSP()
+    developer_btn = next(item for item in self._scroller._items if getattr(item, 'text', None) == "developer")
+    developer_btn.set_click_callback(lambda: gui_app.push_widget(developer_panel))
 
     self.icon_offroad_enable = gui_app.texture("../../sunnypilot/selfdrive/assets/icons_mici/always_offroad.png", BIG_ICON_SIZE,
                                                BIG_ICON_SIZE)
