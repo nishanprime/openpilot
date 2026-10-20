@@ -16,6 +16,7 @@ a.out
 bin/
 
 # created at launch for comma hardware PYTHONPATH (PC uses editable installs via pyproject.toml)
+/jetlink
 /msgq
 /opendbc
 /rednose
