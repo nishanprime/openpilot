@@ -62,6 +62,7 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"IsMetric", {PERSISTENT | BACKUP, BOOL}},
     {"IsOffroad", {CLEAR_ON_MANAGER_START, BOOL}},
     {"IsRhdDetected", {PERSISTENT, BOOL}},
+    {"IsSnapshotRequested", {CLEAR_ON_MANAGER_START | CLEAR_ON_IGNITION_ON, BOOL}},
     {"IsReleaseBranch", {CLEAR_ON_MANAGER_START, BOOL}},
     {"IsTestedBranch", {CLEAR_ON_MANAGER_START, BOOL}},
     {"JoystickDebugMode", {CLEAR_ON_MANAGER_START | CLEAR_ON_OFFROAD_TRANSITION, BOOL}},
