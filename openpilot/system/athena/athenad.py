@@ -793,15 +793,17 @@ def getCarInfo() -> dict[str, str | bool]:
   cp_bytes = Params().get("CarParamsPersistent")
   if cp_bytes is None:
     return {}
+  info: dict[str, str | bool] = {}
   with car.CarParams.from_bytes(cp_bytes) as CP:
-    return {
-      "brand": str(CP.brand),
-      "carFingerprint": str(CP.carFingerprint),
-      "carVin": str(CP.carVin),
-      "enableBsm": bool(CP.enableBsm),
-      "transmissionType": str(CP.transmissionType),
-      "openpilotLongitudinalControl": bool(CP.openpilotLongitudinalControl),
-    }
+    # Field names differ between openpilot/opendbc versions (e.g. no enableBsm here),
+    # so read each one defensively instead of letting one missing field fail the call.
+    for key in ("brand", "carFingerprint", "carVin", "transmissionType", "openpilotLongitudinalControl", "enableBsm"):
+      try:
+        value = getattr(CP, key)
+      except Exception:
+        continue
+      info[key] = value if isinstance(value, bool) else str(value)
+  return info
 
 
 @dispatcher.add_method
