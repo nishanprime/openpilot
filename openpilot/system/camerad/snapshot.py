@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import time
+
 import numpy as np
 
 import openpilot.cereal.messaging as messaging
@@ -45,13 +47,16 @@ def extract_image(buf):
   return yuv_to_rgb(y, u, v)
 
 
-def get_snapshots(frame="narrowRoadCameraState", front_frame="cabinCameraState"):
+def get_snapshots(frame="narrowRoadCameraState", front_frame="cabinCameraState", timeout: float | None = None):
   sockets = [s for s in (frame, front_frame) if s is not None]
   sm = messaging.SubMaster(sockets)
   vipc_clients = {s: VisionIpcClient("camerad", VISION_STREAMS[s], True) for s in sockets}
+  deadline = None if timeout is None else time.monotonic() + timeout
 
   # wait 4 sec from camerad startup for focus and exposure
   while sm[sockets[0]].frameId < int(4. / DT_MDL):
+    if deadline is not None and time.monotonic() > deadline:
+      raise TimeoutError("camerad did not start in time")
     sm.update()
 
   for client in vipc_clients.values():
@@ -61,8 +66,14 @@ def get_snapshots(frame="narrowRoadCameraState", front_frame="cabinCameraState")
   rear, front = None, None
   if frame is not None:
     c = vipc_clients[frame]
-    rear = extract_image(c.recv())
+    buf = c.recv()
+    if buf is None:
+      raise TimeoutError(f"no frame from {frame}")
+    rear = extract_image(buf)
   if front_frame is not None:
     c = vipc_clients[front_frame]
-    front = extract_image(c.recv())
+    buf = c.recv()
+    if buf is None:
+      raise TimeoutError(f"no frame from {front_frame}")
+    front = extract_image(buf)
   return rear, front

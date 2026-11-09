@@ -721,6 +721,75 @@ def clearNavDestination() -> dict[str, int]:
   return {"success": 1}
 
 
+# --- Smart Car additions -------------------------------------------------
+
+SNAPSHOT_STREAMS = {
+  "road": ("narrowRoadCameraState", None),
+  "wide": ("wideRoadCameraState", None),
+  "cabin": (None, "cabinCameraState"),
+  "both": ("narrowRoadCameraState", "cabinCameraState"),
+}
+
+
+def _jpeg_b64(rgb, max_width: int) -> str | None:
+  if rgb is None:
+    return None
+  import io
+  from PIL import Image
+  img = Image.fromarray(rgb)
+  if max_width and img.width > max_width:
+    img = img.resize((max_width, round(img.height * max_width / img.width)))
+  buf = io.BytesIO()
+  img.save(buf, format="JPEG", quality=80)
+  return base64.b64encode(buf.getvalue()).decode("utf-8")
+
+
+@dispatcher.add_method
+def takeSnapshot(camera: str = "both", max_width: int = 1280) -> dict[str, str | None]:
+  """Grab still images. Works onroad (camerad already running) and offroad
+  (briefly wakes camerad via a param, then puts it back to sleep)."""
+  from openpilot.system.camerad.snapshot import get_snapshots
+  if camera not in SNAPSHOT_STREAMS:
+    raise Exception(f"unknown camera '{camera}', expected one of {list(SNAPSHOT_STREAMS)}")
+  road, cabin = SNAPSHOT_STREAMS[camera]
+
+  params = Params()
+  wake_key = None
+  if params.get_bool("IsOffroad"):
+    # Prefer our own key; fall back to driver view if this build doesn't know it yet.
+    for key in ("IsSnapshotRequested", "IsDriverViewEnabled"):
+      try:
+        params.put_bool(key, True)
+        wake_key = key
+        break
+      except Exception:
+        continue
+  try:
+    rear, front = get_snapshots(frame=road, front_frame=cabin, timeout=20.)
+  finally:
+    if wake_key is not None:
+      params.put_bool(wake_key, False)
+
+  return {"camera": camera, "jpegBack": _jpeg_b64(rear, max_width), "jpegFront": _jpeg_b64(front, max_width)}
+
+
+@dispatcher.add_method
+def getCarInfo() -> dict[str, str | bool]:
+  """Identify the car from the last CarParams (carParams can't go through getMessage: it has bytes fields)."""
+  cp_bytes = Params().get("CarParamsPersistent")
+  if cp_bytes is None:
+    return {}
+  with car.CarParams.from_bytes(cp_bytes) as CP:
+    return {
+      "brand": str(CP.brand),
+      "carFingerprint": str(CP.carFingerprint),
+      "carVin": str(CP.carVin),
+      "enableBsm": bool(CP.enableBsm),
+      "transmissionType": str(CP.transmissionType),
+      "openpilotLongitudinalControl": bool(CP.openpilotLongitudinalControl),
+    }
+
+
 @dispatcher.add_method
 def setRouteViewed(route: str) -> dict[str, int | str]:
   # maintain a list of the last 10 routes viewed in connect
