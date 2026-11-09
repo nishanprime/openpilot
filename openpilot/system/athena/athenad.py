@@ -773,6 +773,20 @@ def takeSnapshot(camera: str = "both", max_width: int = 1280) -> dict[str, str |
   return {"camera": camera, "jpegBack": _jpeg_b64(rear, max_width), "jpegFront": _jpeg_b64(front, max_width)}
 
 
+PERSONALITIES = {"aggressive": 0, "standard": 1, "relaxed": 2}  # log.LongitudinalPersonality
+
+
+@dispatcher.add_method
+def setDrivingPersonality(personality: str) -> dict[str, int | str]:
+  """Same effect as the steering-wheel distance button: selfdrived re-reads this
+  param about once a second. Only changes following distance within openpilot's
+  own limits; it cannot engage, accelerate or brake on its own."""
+  if personality not in PERSONALITIES:
+    return {"success": 0, "error": f"unknown personality '{personality}', expected one of {list(PERSONALITIES)}"}
+  Params().put("LongitudinalPersonality", PERSONALITIES[personality])
+  return {"success": 1, "personality": personality}
+
+
 @dispatcher.add_method
 def getCarInfo() -> dict[str, str | bool]:
   """Identify the car from the last CarParams (carParams can't go through getMessage: it has bytes fields)."""
